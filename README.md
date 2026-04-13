@@ -68,7 +68,7 @@ This repo sets **explicit** IDs on **both** targets (Debug + Release):
 - Widget extension: `com.vpnstatus.VPNStatus.VPNStatusWidget`
 - App Group: `group.com.vpnstatus.shared` (update entitlements if you change the group)
 
-The widget `Info.plist` includes `CFBundleIdentifier` = `$(PRODUCT_BUNDLE_IDENTIFIER)`, plus **`CFBundleVersion`** and **`CFBundleShortVersionString`** (currently `1` / `1.0`, matching **Current Project Version** / **Marketing Version** on the app). The simulator install step requires a real **bundle version** on the extension; `INFOPLIST_KEY_*` alone was not enough with a custom plist.
+The widget `Info.plist` is **custom** (not fully generated), so it must include the usual bundle keys Xcode would inject otherwise: **`CFBundleExecutable`** (literal **`VPNStatusWidgetExtension`**, matching the extension target product name—`$(EXECUTABLE_NAME)` may not expand for installd on some Xcode versions), **`CFBundlePackageType`** (`XPC!`), **`CFBundleIdentifier`**, **`CFBundleName`**, plus **`CFBundleVersion`** / **`CFBundleShortVersionString`** (currently `1` / `1.0`, matching the app). Without a valid **`CFBundleExecutable`**, simulator install fails with *missing or invalid CFBundleExecutable*.
 
 When you bump the app version in Xcode, update those two keys in `VPNStatusWidget/Info.plist` to match.
 
