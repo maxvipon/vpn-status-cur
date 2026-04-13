@@ -27,7 +27,7 @@ final class LiveActivityManager {
             return
         }
 
-        _ = try await Activity.request(
+        _ = try Activity.request(
             attributes: VPNActivityAttributes(),
             content: content,
             pushType: nil

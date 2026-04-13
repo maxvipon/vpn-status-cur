@@ -94,43 +94,42 @@ struct SetVPNStatusIntent: AppIntent {
 // MARK: - App Shortcuts (discoverability in Shortcuts app)
 
 struct VPNStatusShortcuts: AppShortcutsProvider {
+    @AppShortcutsBuilder
     static var appShortcuts: [AppShortcut] {
-        [
-            AppShortcut(
-                intent: ShowWorkVPNIntent(),
-                phrases: [
-                    "Work VPN in \(.applicationName)",
-                    "Show Work VPN in \(.applicationName)"
-                ],
-                shortTitle: "Show Work VPN",
-                systemImageName: "network"
-            ),
-            AppShortcut(
-                intent: ShowExternalVPNIntent(),
-                phrases: [
-                    "External VPN in \(.applicationName)",
-                    "Show External VPN in \(.applicationName)"
-                ],
-                shortTitle: "Show External VPN",
-                systemImageName: "network.badge.shield.half.filled"
-            ),
-            AppShortcut(
-                intent: ClearVPNIntent(),
-                phrases: [
-                    "Clear VPN in \(.applicationName)",
-                    "Stop VPN status in \(.applicationName)"
-                ],
-                shortTitle: "Clear VPN",
-                systemImageName: "xmark.circle"
-            ),
-            AppShortcut(
-                intent: SetVPNStatusIntent(),
-                phrases: [
-                    "Set VPN status in \(.applicationName)"
-                ],
-                shortTitle: "Set VPN Status",
-                systemImageName: "slider.horizontal.3"
-            )
-        ]
+        AppShortcut(
+            intent: ShowWorkVPNIntent(),
+            phrases: [
+                "Work VPN in \(.applicationName)",
+                "Show Work VPN in \(.applicationName)"
+            ],
+            shortTitle: "Show Work VPN",
+            systemImageName: "network"
+        )
+        AppShortcut(
+            intent: ShowExternalVPNIntent(),
+            phrases: [
+                "External VPN in \(.applicationName)",
+                "Show External VPN in \(.applicationName)"
+            ],
+            shortTitle: "Show External VPN",
+            systemImageName: "network.badge.shield.half.filled"
+        )
+        AppShortcut(
+            intent: ClearVPNIntent(),
+            phrases: [
+                "Clear VPN in \(.applicationName)",
+                "Stop VPN status in \(.applicationName)"
+            ],
+            shortTitle: "Clear VPN",
+            systemImageName: "xmark.circle"
+        )
+        AppShortcut(
+            intent: SetVPNStatusIntent(),
+            phrases: [
+                "Set VPN status in \(.applicationName)"
+            ],
+            shortTitle: "Set VPN Status",
+            systemImageName: "slider.horizontal.3"
+        )
     }
 }

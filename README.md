@@ -12,9 +12,9 @@ A minimal **iPhone** app that shows a **manually chosen** VPN label in a **Live 
 
 1. Open `VPNStatus/VPNStatus.xcodeproj` in Xcode.
 2. Select your **Development Team** in **Signing & Capabilities** for:
-   - Target **VPNStatus**
-   - Target **VPNStatusWidgetExtension**
-3. Ensure **App Groups** is enabled for both targets with identifier **`group.com.vpnstatus.shared`** (the project already includes entitlements; Xcode may add the capability UI-side).
+  - Target **VPNStatus**
+  - Target **VPNStatusWidgetExtension**
+3. Ensure **App Groups** is enabled for both targets with identifier `**group.com.vpnstatus.shared`** (the project already includes entitlements; Xcode may add the capability UI-side).
 4. Add a **1024×1024** app icon under **VPNStatus** → **Assets** → **AppIcon** (Xcode may warn until this is set).
 5. Choose an **iPhone** run destination and **Run** (⌘R).
 
@@ -24,12 +24,14 @@ First launch: grant **Live Activities** if the system prompts you. You can also 
 
 The app registers these actions (see `VPNStatusIntents.swift` and `VPNStatusShortcuts`):
 
-| Action | Effect |
-|--------|--------|
-| **Show Work VPN** | Starts or updates the Live Activity with **Work VPN** |
+
+| Action                | Effect                                                    |
+| --------------------- | --------------------------------------------------------- |
+| **Show Work VPN**     | Starts or updates the Live Activity with **Work VPN**     |
 | **Show External VPN** | Starts or updates the Live Activity with **External VPN** |
-| **Clear VPN** | Ends the Live Activity and saves **No VPN** |
-| **Set VPN Status** | Parameter **Mode**: Work / External / None (clear) |
+| **Clear VPN**         | Ends the Live Activity and saves **No VPN**               |
+| **Set VPN Status**    | Parameter **Mode**: Work / External / None (clear)        |
+
 
 ### Adding actions on iPhone
 
@@ -58,8 +60,18 @@ The UI reflects **only** the status you set via this app or Shortcuts. It does *
 
 ## Bundle IDs (default)
 
+The widget extension’s bundle ID **must** be **exactly** `your.app.bundle.id` + `.` + `suffix` (same string prefix as the app, then a dot and a suffix). Xcode shows *“Embedded binary’s bundle identifier is not prefixed with the parent app’s bundle identifier”* when the **VPNStatus** and **VPNStatusWidgetExtension** targets disagree—often after changing **Signing & Capabilities** on only one target.
+
+This repo sets **explicit** IDs on **both** targets (Debug + Release):
+
 - App: `com.vpnstatus.VPNStatus`
 - Widget extension: `com.vpnstatus.VPNStatus.VPNStatusWidget`
-- App Group: `group.com.vpnstatus.shared`
+- App Group: `group.com.vpnstatus.shared` (update entitlements if you change the group)
 
-Change these consistently if you ship under your own identifiers.
+The widget `Info.plist` includes `CFBundleIdentifier` = `$(PRODUCT_BUNDLE_IDENTIFIER)`, plus **`CFBundleVersion`** and **`CFBundleShortVersionString`** (currently `1` / `1.0`, matching **Current Project Version** / **Marketing Version** on the app). The simulator install step requires a real **bundle version** on the extension; `INFOPLIST_KEY_*` alone was not enough with a custom plist.
+
+When you bump the app version in Xcode, update those two keys in `VPNStatusWidget/Info.plist` to match.
+
+If you use your own bundle ID, set **`PARENT_APP_BUNDLE_IDENTIFIER`** and **`PRODUCT_BUNDLE_IDENTIFIER`** on **both** targets to stay in sync, then **Product → Clean Build Folder** and rebuild.
+
+**Do not** set the app bundle ID in Xcode to one value (e.g. `com.yourname.vpnstatus`) while the widget still uses `com.vpnstatus.*`—that triggers this error.
