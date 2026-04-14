@@ -8,17 +8,27 @@ final class LiveActivityManager {
 
     private init() {}
 
-    func startOrUpdate(status: VPNStatus) async throws {
+    func startOrUpdate(
+        status: VPNStatus,
+        liveActivityLabel: String? = nil,
+        dynamicIslandLabel: String? = nil
+    ) async throws {
         guard status != .none else {
             try await stop()
             return
         }
 
         VPNStatusStorage.save(status)
+        let trimmedLiveLabel = liveActivityLabel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let normalizedLiveLabel = trimmedLiveLabel.isEmpty ? status.displayTitle : trimmedLiveLabel
+        let trimmedIslandLabel = dynamicIslandLabel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let normalizedIslandLabel = trimmedIslandLabel.isEmpty
+            ? String(normalizedLiveLabel.prefix(8))
+            : String(trimmedIslandLabel.prefix(8))
 
         let state = VPNActivityAttributes.ContentState(
-            displayTitle: status.displayTitle,
-            shortLabel: status.shortLabel
+            liveActivityLabel: normalizedLiveLabel,
+            dynamicIslandLabel: normalizedIslandLabel
         )
         let content = ActivityContent(state: state, staleDate: nil)
 

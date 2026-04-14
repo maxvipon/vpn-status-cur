@@ -1,15 +1,14 @@
 import SwiftUI
 
-/// Renders the **WorkVPN** image asset (same artwork as the app icon) for Work VPN affordances.
+/// Shared VPN icon used across app and Live Activity.
 struct WorkVPNIcon: View {
     var size: CGFloat = 24
 
     var body: some View {
-        Image("WorkVPN")
-            .resizable()
-            .scaledToFit()
+        Image(systemName: "network")
+            .font(.system(size: size * 0.85, weight: .medium))
+            .symbolRenderingMode(.hierarchical)
             .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: size * 0.2237, style: .continuous))
-            .accessibilityLabel("Work VPN")
+            .accessibilityLabel("VPN")
     }
 }

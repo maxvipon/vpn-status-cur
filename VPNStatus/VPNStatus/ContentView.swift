@@ -1,18 +1,17 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var status: VPNStatus = VPNStatusStorage.load()
     @State private var message: String?
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    statusCard
                     actionsSection
                     if let message {
                         errorCallout(message)
                     }
+                    shortcutsHelpCard
                     footerNote
                 }
                 .padding(.horizontal, 16)
@@ -23,49 +22,11 @@ struct ContentView: View {
             .navigationTitle("VPN Status")
             .navigationBarTitleDisplayMode(.large)
         }
-        .onAppear { refresh() }
-    }
-
-    private var statusCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Saved status", systemImage: "checkmark.shield.fill")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-
-            HStack(alignment: .center, spacing: 10) {
-                Group {
-                    if status == .work {
-                        WorkVPNIcon(size: 32)
-                    } else {
-                        Image(systemName: iconName(for: status))
-                            .font(.system(size: 28, weight: .medium))
-                            .foregroundStyle(.tint)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                }
-                .accessibilityHidden(true)
-
-                Text(status.displayTitle)
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .accessibilityAddTraits(.isHeader)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .background {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Color(.separator).opacity(0.45), lineWidth: 0.5)
-        }
     }
 
     private var actionsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Live Activity")
+            Text("Live activity")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
@@ -74,32 +35,34 @@ struct ContentView: View {
 
             VStack(spacing: 12) {
                 actionButton(
-                    title: "Show Work VPN",
-                    subtitle: "Lock Screen & Dynamic Island",
-                    workVPNAsset: true
+                    title: "Set VPN status: Work"
                 ) {
-                    Task { await apply(.work) }
+                    Task {
+                        await apply(
+                            .work,
+                            liveActivityLabel: "Work VPN",
+                            dynamicIslandLabel: "Work"
+                        )
+                    }
                 }
 
                 actionButton(
-                    title: "Show External VPN",
-                    subtitle: "Lock Screen & Dynamic Island",
-                    workVPNAsset: false,
-                    systemImage: "network.badge.shield.half.filled"
+                    title: "Set VPN status: External"
                 ) {
-                    Task { await apply(.external) }
+                    Task {
+                        await apply(
+                            .external,
+                            liveActivityLabel: "External VPN",
+                            dynamicIslandLabel: "External"
+                        )
+                    }
                 }
 
                 Button(role: .destructive) {
                     Task { await apply(.none) }
                 } label: {
                     Label {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Clear VPN")
-                            Text("Stop Live Activity")
-                                .font(.caption.weight(.medium))
-                                .foregroundStyle(.secondary)
-                        }
+                        Text("Clear VPN status")
                     } icon: {
                         Image(systemName: "xmark.circle.fill")
                             .symbolRenderingMode(.hierarchical)
@@ -115,26 +78,13 @@ struct ContentView: View {
 
     private func actionButton(
         title: String,
-        subtitle: String,
-        workVPNAsset: Bool,
-        systemImage: String = "network",
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Label {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                    Text(subtitle)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                }
+                Text(title)
             } icon: {
-                if workVPNAsset {
-                    WorkVPNIcon(size: 22)
-                } else {
-                    Image(systemName: systemImage)
-                        .symbolRenderingMode(.hierarchical)
-                }
+                WorkVPNIcon(size: 22)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 4)
@@ -165,6 +115,25 @@ struct ContentView: View {
         .accessibilityElement(children: .combine)
     }
 
+    private var shortcutsHelpCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("How to use with Shortcuts")
+                .font(.subheadline.weight(.semibold))
+            Text("1. Add action `Set VPN Status`.\n2. Set `Live Activity Label` (normal length text).\n3. Set `Dynamic Island Label` (short text up to 8 chars).")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            Text("Use `Clear VPN Status` to stop the Live Activity.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+        }
+    }
+
     private var footerNote: some View {
         Text("Status here and in Shortcuts is manual only — it does not reflect the system VPN connection.")
             .font(.footnote)
@@ -174,30 +143,22 @@ struct ContentView: View {
             .padding(.horizontal, 8)
     }
 
-    private func iconName(for status: VPNStatus) -> String {
-        switch status {
-        case .work:
-            preconditionFailure("Work status uses WorkVPNIcon, not SF Symbol")
-        case .external:
-            return "globe"
-        case .none:
-            return "network.slash"
-        }
-    }
-
-    private func refresh() {
-        status = VPNStatusStorage.load()
-    }
-
-    private func apply(_ newStatus: VPNStatus) async {
+    private func apply(
+        _ newStatus: VPNStatus,
+        liveActivityLabel: String? = nil,
+        dynamicIslandLabel: String? = nil
+    ) async {
         message = nil
         do {
             if newStatus == .none {
                 try await LiveActivityManager.shared.stop()
             } else {
-                try await LiveActivityManager.shared.startOrUpdate(status: newStatus)
+                try await LiveActivityManager.shared.startOrUpdate(
+                    status: newStatus,
+                    liveActivityLabel: liveActivityLabel,
+                    dynamicIslandLabel: dynamicIslandLabel
+                )
             }
-            refresh()
         } catch {
             message = error.localizedDescription
         }
