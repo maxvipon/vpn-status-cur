@@ -2,6 +2,13 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var message: String?
+    @State private var selectedButton: SelectedButton?
+
+    private enum SelectedButton {
+        case corp
+        case external
+        case hide
+    }
 
     var body: some View {
         NavigationStack {
@@ -12,85 +19,100 @@ struct ContentView: View {
                         errorCallout(message)
                     }
                     shortcutsHelpCard
-                    footerNote
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
             .scrollIndicators(.hidden)
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("LA Status")
+            .navigationTitle("Live Activity Status")
             .navigationBarTitleDisplayMode(.large)
         }
     }
 
     private var actionsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Live activity")
+            Text("TEST")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
                 .tracking(0.6)
                 .padding(.leading, 4)
 
-            VStack(spacing: 12) {
+            VStack(spacing: 18) {
                 actionButton(
-                    title: "Show Live Activity: Corp VPN"
+                    title: "Show Live Activity: Corp VPN",
+                    isSelected: selectedButton == .corp
                 ) {
                     Task {
                         await apply(
                             .active,
                             liveActivityLabel: "Corp VPN",
-                            dynamicIslandLabel: "Work"
+                            dynamicIslandLabel: "Work",
+                            selected: .corp
                         )
                     }
                 }
 
                 actionButton(
-                    title: "Show Live Activity: External VPN"
+                    title: "Show Live Activity: External VPN",
+                    isSelected: selectedButton == .external
                 ) {
                     Task {
                         await apply(
                             .active,
                             liveActivityLabel: "External VPN",
-                            dynamicIslandLabel: "Ext"
+                            dynamicIslandLabel: "Ext",
+                            selected: .external
                         )
                     }
                 }
 
-                Button(role: .destructive) {
-                    Task { await apply(.none) }
-                } label: {
-                    Label {
-                        Text("Hide Live Activity")
-                    } icon: {
-                        Image(systemName: "xmark.circle.fill")
-                            .symbolRenderingMode(.hierarchical)
+                actionButton(
+                    title: "Hide Live Activity",
+                    isSelected: selectedButton == .hide,
+                    systemImage: "xmark.circle.fill",
+                    accentColor: .red
+                ) {
+                    Task {
+                        await apply(.none, selected: .hide)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 4)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
             }
         }
     }
 
     private func actionButton(
         title: String,
+        isSelected: Bool,
+        systemImage: String = "network",
+        accentColor: Color = .blue,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Label {
+            HStack(spacing: 12) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 18, weight: .semibold))
+                    .symbolRenderingMode(.hierarchical)
+
                 Text(title)
-            } icon: {
-                StatusIcon(size: 22)
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 4)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 18)
+            .foregroundStyle(isSelected ? Color.white : accentColor)
+            .background(
+                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                    .fill(isSelected ? accentColor : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                    .stroke(accentColor, lineWidth: 1.2)
+            )
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
+        .buttonStyle(PressInButtonStyle())
+        .animation(.easeInOut(duration: 0.18), value: isSelected)
     }
 
     private func errorCallout(_ text: String) -> some View {
@@ -116,37 +138,35 @@ struct ContentView: View {
     }
 
     private var shortcutsHelpCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("How to use with Shortcuts")
                 .font(.subheadline.weight(.semibold))
-            Text("1. Add action `Show Live Activity`.\n2. Set `Live Activity Label` (normal length text).\n3. Set `Dynamic Island Label` (short text up to 8 chars).")
-                .font(.footnote)
                 .foregroundStyle(.secondary)
-            Text("Use `Hide Live Activity` to stop the Live Activity.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+                .tracking(0.6)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("1. Add action **Show Live Activity**.\n2. Set **Live Activity Label**.\n3. Set **Dynamic Island Label** (up to 8 chars).")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                Text("Use **Hide Live Activity** action to stop the Live Activity.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 8)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(18)
+            .background {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        }
-    }
-
-    private var footerNote: some View {
-        Text("Status here and in Shortcuts is manual only — it does not reflect the system connection.")
-            .font(.footnote)
-            .foregroundStyle(.tertiary)
-            .multilineTextAlignment(.center)
-            .padding(.top, 8)
-            .padding(.horizontal, 8)
     }
 
     private func apply(
         _ newStatus: LAStatus,
         liveActivityLabel: String? = nil,
-        dynamicIslandLabel: String? = nil
+        dynamicIslandLabel: String? = nil,
+        selected: SelectedButton? = nil
     ) async {
         message = nil
         do {
@@ -159,9 +179,21 @@ struct ContentView: View {
                     dynamicIslandLabel: dynamicIslandLabel
                 )
             }
+            if let selected {
+                self.selectedButton = selected
+            }
         } catch {
             message = error.localizedDescription
         }
+    }
+}
+
+private struct PressInButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .brightness(configuration.isPressed ? -0.03 : 0)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
