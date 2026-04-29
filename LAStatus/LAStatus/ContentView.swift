@@ -102,7 +102,7 @@ struct ContentView: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 24, weight: .semibold))
                     .symbolRenderingMode(.hierarchical)
 
                 Text(title)

@@ -21,7 +21,7 @@ struct LAStatusLiveActivity: Widget {
                 }
             } compactLeading: {
                 StatusIcon(
-                    size: 18,
+                    size: 24,
                     systemName: context.state.iconSymbolName,
                     accessibilityLabel: context.state.liveActivityLabel
                 )
@@ -33,7 +33,7 @@ struct LAStatusLiveActivity: Widget {
                     .foregroundStyle(Self.uiColor(context.state.iconTextColor))
             } minimal: {
                 StatusIcon(
-                    size: 18,
+                    size: 24,
                     systemName: context.state.iconSymbolName,
                     accessibilityLabel: context.state.liveActivityLabel
                 )
